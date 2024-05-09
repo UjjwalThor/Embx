@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+<title>-----</title>
+</head>
+<body class="ml-4 bg-dark text-light">
+
+<!-- Buttons -->
+<button class="m-1 btn btn-primary" onclick="copyCode(1)">LCD</button>
+<button class="m-1 btn btn-primary" onclick="copyCode(2)">UART</button><br>
+<button class="m-1 btn btn-primary" onclick="copyCode(3)">LED Timer</button>
+<button class="m-1 btn btn-primary" onclick="copyCode(4)">LED Main.rtf</button><br>
+
+#V <br> 
+<!-- Add more buttons as needed -->
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+<script>
+
+function copyCode(experimentNumber) {
+    var code;
+    switch (experimentNumber) {
+        case 1:
+            code = `/*RS- P1.20, EN-P1.21 */
+#include<lpc214x.h>
+#define RS 1<<20 //define RS pin
+#define EN 1<<21 //define EN pin
+void delay(unsigned int time)
+{
+unsigned int i,j;
+for(i = 0; i < time ;i++ )
+{
+for(j = 0; j < 10000 ; j++);
+}
+}
+void LCD_data(unsigned char ch) 
+{
+IOCLR0 = 0x000FF000; //clear LCD pins
+IOSET0 = ch<<12; //shift data and set the data 
+IOSET1 = RS; 
+IOSET1 = EN; //EN pulse
+delay(100);
+IOCLR1 = EN; 
+}
+void LCD_cmd(unsigned char ch) 
+{
+IOCLR0 = 0x000FF000;
+IOSET0 = ch<<12; //shift data and set the data 
+IOCLR1 = RS; 
+IOSET1 = EN; //EN pulse
+delay(100);
+IOCLR1 = EN;
+}
+void LCD_init()
+{
+IODIR0 = 0x000FF000; //set the pins as output
+IODIR1 = RS | EN;
+LCD_cmd(0x38); //8bit use both lines
+LCD_cmd(0x06); //Entry mode
+LCD_cmd(0x0C); //display ON cursor OFF
+LCD_cmd(0x01); //Clear display
+LCD_cmd(0x80); //cursor at 1st line 1st position
+}
+int main(void)
+{
+unsigned char *ch = "SCOE E & TC";
+LCD_init();
+PINSEL0 = 0x00000000;
+IODIR0 = 0x000ff0f0;
+IOSET0 = 0x000000F0;
+while(*ch)
+LCD_data(*ch++);
+return 0;
+}
+`;
+            break;
+        case 2:
+            code = ` #include "lpc214x.h"
+ #include "stdio.h"
+void UartInit() 
+{
+ 
+PINSEL0 = 0x05;
+U0LCR = 0x83; // LCR :DLAB=1 ; 8 bits ; 1 stop bit ; no parity
+U0DLM = 00;
+U0DLL = 97;
+U0LCR = 0x03; // Line control register :DLAB=0 
+}
+int UART_GetChar(void)
+{
+while(!(U0LSR & 0x1)); 
+ return(U0RBR);
+}
+int UART_PutChar(unsigned char Ch)
+{
+ while(!(U0LSR & 0x20));
+ return( U0THR = Ch);
+}
+int main(void)
+{
+ UartInit(9600); // initialise the UART0
+ 
+while(1)
+{
+UART_PutChar(UART_GetChar()+1);
+}
+return 0;
+}
+`;
+            break;
+        case 3:
+            code = `#include <lpc21xx.h>
+ 
+ void delay(unsigned int itime);
+ int main (void) 
+ { 
+ IODIR0 = 0x000ff000; 
+ while (1) 
+ { 
+ IOSET0=0x000ff000; 
+ delay(1000);
+ IOCLR0=0x000ff000; 
+ delay(1000); 
+ }
+  
+ }
+ void delay(unsigned int itime)
+ {
+ T0PR=4999; 
+ T0MR0=100; // Count in match register
+ T0TC=0x00000000; // initial value always starts with Zero
+ T0TCR=0X01; //START TIMER
+ while(T0TC !=T0MR0); // Wait till T0TC value becomes equal to T0MR0
+ T0TCR=0X02; //STOP TIMER
+ }
+`;
+        case 4:
+            code = `/* Includes ------------------------------------------------------------------*/
+#include "main.h"
+
+/* Private includes ----------------------------------------------------------*/
+/* USER CODE BEGIN Includes */
+
+/* USER CODE END Includes */
+
+/* Private typedef -----------------------------------------------------------*/
+/* USER CODE BEGIN PTD */
+
+/* USER CODE END PTD */
+
+/* Private define ------------------------------------------------------------*/
+/* USER CODE BEGIN PD */
+/* USER CODE END PD */
+
+/* Private macro -------------------------------------------------------------*/
+/* USER CODE BEGIN PM */
+
+/* USER CODE END PM */
+
+/* Private variables ---------------------------------------------------------*/
+
+/* USER CODE BEGIN PV */
+
+/* USER CODE END PV */
+
+/* Private function prototypes -----------------------------------------------*/
+void SystemClock_Config(void);
+static void MX_GPIO_Init(void);
+/* USER CODE BEGIN PFP */
+
+/* USER CODE END PFP */
+
+/* Private user code ---------------------------------------------------------*/
+/* USER CODE BEGIN 0 */
+
+/* USER CODE END 0 */
+
+/**
+  * @brief  The application entry point.
+  * @retval int
+  */
+int main(void)
+{
+  /* USER CODE BEGIN 1 */
+
+  /* USER CODE END 1 */
+
+  /* MCU Configuration--------------------------------------------------------*/
+
+  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
+  HAL_Init();
+
+  /* USER CODE BEGIN Init */
+
+  /* USER CODE END Init */
+
+  /* Configure the system clock */
+  SystemClock_Config();
+
+  /* USER CODE BEGIN SysInit */
+
+  /* USER CODE END SysInit */
+
+  /* Initialize all configured peripherals */
+  MX_GPIO_Init();
+  /* USER CODE BEGIN 2 */
+
+  /* USER CODE END 2 */
+
+  /* Infinite loop */
+  /* USER CODE BEGIN WHILE */
+  while (1)
+  {
+    /* USER CODE END WHILE */
+	  HAL_GPIO_WritePin(led4_GPIO_Port, led4_Pin, 0);
+	  HAL_GPIO_WritePin(GPIOC, led1_Pin|led2_Pin|led3_Pin, 0);
+	  HAL_GPIO_WritePin(GPIOB, led5_Pin|led6_Pin|led7_Pin|led8_Pin, 0);
+	  HAL_Delay(1000);
+	  HAL_GPIO_WritePin(led4_GPIO_Port, led4_Pin, 1);
+	  HAL_GPIO_WritePin(GPIOC, led1_Pin|led2_Pin|led3_Pin,1);
+	  HAL_GPIO_WritePin(GPIOB, led5_Pin|led6_Pin|led7_Pin|led8_Pin, 1);
+	  HAL_Delay(1000);
+    /* USER CODE BEGIN 3 */
+  }
+  /* USER CODE END 3 */
+}
+
+/**
+  * @brief System Clock Configuration
+  * @retval None
+  */
+void SystemClock_Config(void)
+{
+  RCC_OscInitTypeDef RCC_OscInitStruct = {0};
+  RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
+
+  /** Configure the main internal regulator output voltage
+  */
+  __HAL_RCC_PWR_CLK_ENABLE();
+  __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
+  /** Initializes the RCC Oscillators according to the specified parameters
+  * in the RCC_OscInitTypeDef structure.
+  */
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
+  RCC_OscInitStruct.HSIState = RCC_HSI_ON;
+  RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
+  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
+  if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /** Initializes the CPU, AHB and APB buses clocks
+  */
+  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
+                              |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
+  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_HSI;
+  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
+  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
+  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
+
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK)
+  {
+    Error_Handler();
+  }
+}
+
+/**
+  * @brief GPIO Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_GPIO_Init(void)
+{
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
+
+  /* GPIO Ports Clock Enable */
+  __HAL_RCC_GPIOE_CLK_ENABLE();
+  __HAL_RCC_GPIOC_CLK_ENABLE();
+  __HAL_RCC_GPIOB_CLK_ENABLE();
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(led4_GPIO_Port, led4_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOC, led1_Pin|led2_Pin|led3_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOB, led5_Pin|led6_Pin|led7_Pin|led8_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin : led4_Pin */
+  GPIO_InitStruct.Pin = led4_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(led4_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : led1_Pin led2_Pin led3_Pin */
+  GPIO_InitStruct.Pin = led1_Pin|led2_Pin|led3_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : led5_Pin led6_Pin led7_Pin led8_Pin */
+  GPIO_InitStruct.Pin = led5_Pin|led6_Pin|led7_Pin|led8_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+}
+
+/* USER CODE BEGIN 4 */
+
+/* USER CODE END 4 */
+
+/**
+  * @brief  This function is executed in case of error occurrence.
+  * @retval None
+  */
+void Error_Handler(void)
+{
+  /* USER CODE BEGIN Error_Handler_Debug */
+  /* User can add his own implementation to report the HAL error return state */
+  __disable_irq();
+  while (1)
+  {
+  }
+  /* USER CODE END Error_Handler_Debug */
+}
+
+#ifdef  USE_FULL_ASSERT
+/**
+  * @brief  Reports the name of the source file and the source line number
+  *         where the assert_param error has occurred.
+  * @param  file: pointer to the source file name
+  * @param  line: assert_param error line source number
+  * @retval None
+  */
+void assert_failed(uint8_t *file, uint32_t line)
+{
+  /* USER CODE BEGIN 6 */
+  /* User can add his own implementation to report the file name and line number,
+     ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
+  /* USER CODE END 6 */
+}
+#endif /* USE_FULL_ASSERT */
+
+
+
+`;
+            break;
+        
+        // Add more cases for additional experiments
+        default:
+            code = "Experiment code not found";
+            break;
+    }
+    
+    // Create a textarea element to hold the code
+    var textArea = document.createElement("textarea");
+    textArea.value = code;
+    document.body.appendChild(textArea);
+
+    // Select the text in the textarea
+    textArea.select();
+  
+    // Copy the selected text
+    document.execCommand("copy");
+
+    // Remove the textarea from the document
+    document.body.removeChild(textArea);
+
+    // Alert the user
+    alert("Done!");
+}
+</script>
+
+</body>
+</html>
